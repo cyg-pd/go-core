@@ -30,15 +30,7 @@ func Default() *Application { return defaultApplication.Load() }
 // SetDefault makes app the default [Application]
 func SetDefault(app *Application) { defaultApplication.Store(app) }
 
-type Version struct {
-	Version   string
-	BuildTime string
-	BuildUser string
-}
-
 type Application struct {
-	Version *Version
-
 	msgChan  chan struct{}
 	httpChan chan struct{}
 
@@ -58,14 +50,6 @@ func (a *Application) AddBeforeRunHook(hook func(ctx context.Context) error) {
 
 func (a *Application) AddBeforeShutdownHook(hook func(ctx context.Context) error) {
 	a.beforeShutdownHooks = append(a.beforeShutdownHooks, hook)
-}
-
-func (a *Application) SetVersion(version, buildUser, buildTime string) {
-	a.Version = &Version{
-		Version:   version,
-		BuildTime: buildTime,
-		BuildUser: buildUser,
-	}
 }
 
 func (a *Application) Run(ctx context.Context) error {
