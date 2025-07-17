@@ -2,28 +2,10 @@ package httprouter
 
 import (
 	"context"
-	"sync/atomic"
 
-	"github.com/cyg-pd/go-core/config"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
-
-var defaultRouter atomic.Pointer[Server]
-
-func init() {
-	defaultRouter.Store(New(config.Default()))
-}
-
-// Default returns the default [Server].
-func Default() *Server {
-	return defaultRouter.Load()
-}
-
-// SetDefault makes app the default [Server]
-func SetDefault(app *Server) {
-	defaultRouter.Store(app)
-}
 
 type Router = gin.IRouter
 

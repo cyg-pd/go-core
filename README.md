@@ -43,24 +43,27 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
-var app = application.Default()
+var app *application.Application
 
 func init() {
 	config.Parse()
 	logger.Parse()
+
+	app = application.New(httprouter.New(config.Default()), msgrouter.New())
+	app.AddBeforeRunHook(func(ctx context.Context) error { return provider.Boot() })
+	app.AddBeforeShutdownHook(func(ctx context.Context) error { return provider.Shutdown() })
 }
 
 func main() {
 	ctx := context.Background()
-
-	app.AddBeforeRunHook(func(ctx context.Context) error { return provider.Boot() })
-	app.AddBeforeShutdownHook(func(ctx context.Context) error { return provider.Shutdown() })
-	app.Run(ctx)
+	if err := app.Run(ctx); err != nil {
+		panic(err)
+	}
 }
 
 // http middleware
 func init() {
-	r := httprouter.Default()
+	r := app.HTTPRouter()
 
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(gin.Recovery())
