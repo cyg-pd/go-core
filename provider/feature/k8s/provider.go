@@ -1,78 +1,90 @@
-package kubernetes
+package k8s
 
 import (
-	"context"
 	"net/http"
 	"os"
 	"sync/atomic"
 	"time"
 
 	"github.com/cyg-pd/go-core/httprouter"
-	"github.com/cyg-pd/go-core/provider"
 	"github.com/gin-gonic/gin"
 )
 
-func init() {
-	provider.Register(&Provider{
-		term: make(chan struct{}),
+type option interface{ apply(*Provider) }
+type optionFunc func(*Provider)
+
+func (fn optionFunc) apply(cfg *Provider) { fn(cfg) }
+
+func WithTerminationGracePeriod(period time.Duration) option {
+	return optionFunc(func(p *Provider) {
+		p.terminationGracePeriod = period
 	})
 }
 
-const FailureThreshold = 5
+func New(r httprouter.Router, opts ...option) *Provider {
+	p := &Provider{
+		httpRouter:             r,
+		terminationGracePeriod: time.Second * 3,
+	}
+	for _, opt := range opts {
+		opt.apply(p)
+	}
+	return p
+}
 
 // Provider 實作 K8s 相關功能
 type Provider struct {
+	httpRouter httprouter.Router
+
+	terminationGracePeriod time.Duration
+
 	initial atomic.Bool
 	ready   atomic.Bool
-	term    chan struct{}
 }
 
 // Boot implements provider.Provider.
-func (s *Provider) Boot() error {
-	s.ready.Store(true)
+func (p *Provider) Boot() error {
+	if p.httpRouter == nil {
+		return nil
+	}
 
-	r := httprouter.Default()
-	r.GET("__kube/readiness", s.readiness)
-	r.GET("__kube/liveness", s.liveness)
+	p.ready.Store(true)
+
+	p.httpRouter.GET("__kube/readiness", p.readiness)
+	p.httpRouter.GET("__kube/liveness", p.liveness)
 
 	return nil
 }
 
-func (s *Provider) readiness(ctx *gin.Context) {
-	if !s.initial.Load() {
-		s.initial.Store(true)
+func (p *Provider) readiness(ctx *gin.Context) {
+	if !p.initial.Load() {
+		p.initial.Store(true)
 	}
 
-	if s.ready.Load() {
+	if p.ready.Load() {
 		ctx.AbortWithStatus(http.StatusOK)
 	} else {
-		s.term <- struct{}{}
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 }
 
-func (s *Provider) liveness(ctx *gin.Context) {
+func (p *Provider) liveness(ctx *gin.Context) {
+	if !p.initial.Load() {
+		p.initial.Store(true)
+	}
+
 	ctx.AbortWithStatus(http.StatusOK)
 }
 
-func (s *Provider) Shutdown() error {
-	defer close(s.term)
-
-	if os.Getenv("KUBERNETES_PORT") == "" || !s.initial.Load() {
+func (p *Provider) Shutdown() error {
+	if p.httpRouter == nil {
 		return nil
 	}
 
-	s.ready.Store(false)
+	p.ready.Store(false)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
-	defer cancel()
-
-	for range [FailureThreshold]struct{}{} {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-s.term:
-		}
+	if os.Getenv("KUBERNETES_PORT") != "" && p.initial.Load() {
+		<-time.After(p.terminationGracePeriod)
 	}
 
 	return nil
