@@ -3,7 +3,6 @@ package msgrouter
 import (
 	"context"
 	"sync"
-	"sync/atomic"
 
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -15,22 +14,6 @@ import (
 	"github.com/cyg-pd/go-watermillx/opentelemetry"
 	"github.com/cyg-pd/go-watermillx/opentelemetry/metrics"
 )
-
-var defaultRouter atomic.Pointer[Router]
-
-func init() {
-	defaultRouter.Store(New())
-}
-
-// Default returns the default [Router].
-func Default() *Router {
-	return defaultRouter.Load()
-}
-
-// SetDefault makes app the default [Router]
-func SetDefault(app *Router) {
-	defaultRouter.Store(app)
-}
 
 type Router struct {
 	*message.Router

@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"sync/atomic"
 	"syscall"
 
 	"github.com/cyg-pd/go-core/httprouter"
@@ -14,21 +13,6 @@ import (
 	_ "github.com/cyg-pd/go-otelx/autoconf"
 	"golang.org/x/sync/errgroup"
 )
-
-var defaultApplication atomic.Pointer[Application]
-
-func init() {
-	defaultApplication.Store(New(
-		httprouter.Default(),
-		msgrouter.Default(),
-	))
-}
-
-// Default returns the default [Application].
-func Default() *Application { return defaultApplication.Load() }
-
-// SetDefault makes app the default [Application]
-func SetDefault(app *Application) { defaultApplication.Store(app) }
 
 type Application struct {
 	msgChan  chan struct{}
