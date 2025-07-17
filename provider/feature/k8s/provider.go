@@ -15,16 +15,16 @@ type optionFunc func(*Provider)
 
 func (fn optionFunc) apply(cfg *Provider) { fn(cfg) }
 
-func WithTerminationGracePeriod(period time.Duration) option {
+func WithTerminateDelay(delay time.Duration) option {
 	return optionFunc(func(p *Provider) {
-		p.terminationGracePeriod = period
+		p.terminateDelay = delay
 	})
 }
 
 func New(r httprouter.Router, opts ...option) *Provider {
 	p := &Provider{
-		httpRouter:             r,
-		terminationGracePeriod: time.Second * 3,
+		httpRouter:     r,
+		terminateDelay: time.Second * 3,
 	}
 	for _, opt := range opts {
 		opt.apply(p)
@@ -36,7 +36,7 @@ func New(r httprouter.Router, opts ...option) *Provider {
 type Provider struct {
 	httpRouter httprouter.Router
 
-	terminationGracePeriod time.Duration
+	terminateDelay time.Duration
 
 	initial atomic.Bool
 	ready   atomic.Bool
@@ -84,7 +84,7 @@ func (p *Provider) Shutdown() error {
 	p.ready.Store(false)
 
 	if os.Getenv("KUBERNETES_PORT") != "" && p.initial.Load() {
-		<-time.After(p.terminationGracePeriod)
+		<-time.After(p.terminateDelay)
 	}
 
 	return nil
