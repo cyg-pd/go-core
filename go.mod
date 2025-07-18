@@ -7,13 +7,16 @@ require (
 	github.com/cyg-pd/go-otelx v0.0.3
 	github.com/cyg-pd/go-slogx v0.0.4
 	github.com/cyg-pd/go-watermillx v0.0.4
-	github.com/gin-contrib/pprof v1.5.3
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-playground/validator/v10 v10.27.0
+	github.com/samber/lo v1.51.0
 	github.com/spf13/cast v1.7.1
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0
+	go.opentelemetry.io/otel v1.37.0
+	go.opentelemetry.io/otel/metric v1.37.0
 	go.opentelemetry.io/otel/trace v1.37.0
 	golang.org/x/sync v0.16.0
 )
@@ -30,6 +33,7 @@ require (
 	github.com/cyg-pd/go-reflectx v0.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dentech-floss/watermill-opentelemetry-go-extra v0.1.1 // indirect
+	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/gin-contrib/sse v1.0.0 // indirect
@@ -78,7 +82,6 @@ require (
 	go.opentelemetry.io/contrib/propagators/b3 v1.36.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.36.0 // indirect
 	go.opentelemetry.io/contrib/propagators/ot v1.36.0 // indirect
-	go.opentelemetry.io/otel v1.37.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.12.2 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.12.2 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.36.0 // indirect
@@ -91,7 +94,6 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.36.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.36.0 // indirect
 	go.opentelemetry.io/otel/log v0.12.2 // indirect
-	go.opentelemetry.io/otel/metric v1.37.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.36.0 // indirect
 	go.opentelemetry.io/otel/sdk/log v0.12.2 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.36.0 // indirect
