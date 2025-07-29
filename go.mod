@@ -10,7 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/samber/lo v1.51.0
-	github.com/spf13/cast v1.7.1
+	github.com/spf13/cast v1.9.2
 	github.com/spf13/pflag v1.0.7
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
