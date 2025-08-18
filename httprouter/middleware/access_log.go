@@ -95,7 +95,7 @@ func (a *AccessLog) Middleware() gin.HandlerFunc {
 		if err := c.Errors.String(); err == "" {
 			a.log(slog.InfoContext, c, time.Since(start), reqBody, buf, slog.Attr{})
 		} else {
-			a.log(slog.ErrorContext, c, time.Since(start), reqBody, buf, slog.String("go.error", err))
+			a.log(slog.ErrorContext, c, time.Since(start), reqBody, buf, slog.String("error.message", err))
 		}
 	}
 }

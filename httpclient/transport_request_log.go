@@ -44,13 +44,13 @@ func (l requestLog) RoundTrip(req *http.Request) (res *http.Response, e error) {
 	)
 
 	if e != nil {
-		l.log.ErrorContext(ctx, msg, ch, lat, reqAttr, slog.Any("go.error", e))
+		l.log.ErrorContext(ctx, msg, ch, lat, reqAttr, slog.String("error.message", e.Error()))
 		return res, e
 	}
 
 	resAttr, err := l.resAttr(res)
 	if err != nil {
-		l.log.ErrorContext(ctx, msg, ch, lat, reqAttr, resAttr, slog.Any("go.error", err))
+		l.log.ErrorContext(ctx, msg, ch, lat, reqAttr, resAttr, slog.String("error.message", err.Error()))
 		return res, err
 	}
 

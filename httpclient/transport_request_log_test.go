@@ -140,7 +140,7 @@ func TestBodyReadError(t *testing.T) {
 				"status_code": 200,
 				"headers": null
 			},
-			"go.error": "read response body fail: failed reading"
+			"error.message": "read response body fail: failed reading"
 		`),
 		buf.String(),
 	)
@@ -183,7 +183,7 @@ func TestRoundTripError(t *testing.T) {
 				},
 				"headers": {}
 			},
-			"go.error": "error"
+			"error.message": "error"
 		`),
 		buf.String(),
 	)

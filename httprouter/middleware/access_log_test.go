@@ -81,9 +81,7 @@ func TestAccessLogSkip(t *testing.T) {
 
 	// TEST
 	is := assert.New(t)
-	var logData map[string]any
-	is.NoError(json.Unmarshal(buf.Bytes(), &logData))
-	is.Equal("", buf.String())
+	is.Zero("", buf)
 }
 
 func TestNoReqBody(t *testing.T) {
@@ -245,7 +243,7 @@ func TestGinResError(t *testing.T) {
 	is.NoError(json.Unmarshal(buf.Bytes(), &logData))
 
 	is.JSONEq(fmt.Sprintf(logTemplate, `
-	"go.error": "Error #01: test error\n",
+	"error.message": "Error #01: test error\n",
 	"ip": "`+cast.ToString(logData["ip"])+`",
 	"latency": `+cast.ToString(logData["latency"])+`,
 	"level": "ERROR",
