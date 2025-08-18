@@ -28,28 +28,31 @@ package main
 
 import (
 	"context"
-	"net/http"
-	"strings"
 
 	"github.com/cyg-pd/go-core/application"
 	"github.com/cyg-pd/go-core/config"
 	"github.com/cyg-pd/go-core/httprouter"
 	"github.com/cyg-pd/go-core/httprouter/middleware"
 	"github.com/cyg-pd/go-core/logger"
+	"github.com/cyg-pd/go-core/msgrouter"
 	"github.com/cyg-pd/go-core/provider"
-	"github.com/cyg-pd/go-otelx"
-	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+	"github.com/spf13/pflag"
 )
 
 var app *application.Application
 
 func init() {
-	config.Parse()
-	logger.Parse()
+	f := pflag.CommandLine
+	v := config.New()
 
-	app = application.New(httprouter.New(config.Default()), msgrouter.New())
+	httprouter.SetupFlags(f, v, "http")
+	logger.SetupFlags(f, v)
+
+	pflag.Parse()
+	logger.Parse(v)
+
+	app = application.New(httprouter.New(v), msgrouter.New())
 	app.AddBeforeRunHook(func(ctx context.Context) error { return provider.Boot() })
 	app.AddBeforeShutdownHook(func(ctx context.Context) error { return provider.Shutdown() })
 }
@@ -65,16 +68,9 @@ func main() {
 func init() {
 	r := app.HTTPRouter()
 
-	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(gin.Recovery())
-	r.Use(otelgin.Middleware(otelx.ServiceName(), otelgin.WithFilter(
-		RequestDoubleUnderscore,
-	)))
 	r.Use(middleware.Hostname())
 	r.Use(middleware.CorrelationID())
 }
 
-func RequestDoubleUnderscore(r *http.Request) bool {
-	return !strings.Contains(r.URL.Path, "__")
-}
 ```

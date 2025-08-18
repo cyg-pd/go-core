@@ -70,7 +70,7 @@ func (r *Router) Run(ctx context.Context) error {
 
 func (r *Router) Shutdown(ctx context.Context) error {
 	r.Init()
-	return r.Router.Close()
+	return r.Close()
 }
 
 func New() *Router { return &Router{} }

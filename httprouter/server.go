@@ -41,7 +41,7 @@ func (e *server) Run(host ...string) error {
 		host = append(host, defaultHost+":"+defaultPort)
 	}
 
-	e.server = createHTTPServer(host[0], http.AllowQuerySemicolons(e.Engine.Handler()))
+	e.server = createHTTPServer(host[0], http.AllowQuerySemicolons(e.Handler()))
 
 	slog.Info("core/httprouter: listening and serving HTTP on " + host[0])
 	if err := e.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {

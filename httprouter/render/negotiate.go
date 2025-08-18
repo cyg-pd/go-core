@@ -18,11 +18,6 @@ var NegotiateOffered = []string{
 }
 
 // Negotiate serializes the given data as Negotiate into the response body.
-//
-//	Example Usage:
-//	type Data struct { Total int }
-//	Negotiate[Data](*gin.Context, Data{10})
-//		`{"result": "ok", "ret": {"Total": 10}}`
 func Negotiate(c *gin.Context, code int, obj any) {
 	switch c.NegotiateFormat(NegotiateOffered...) {
 	case binding.MIMEJSON:
@@ -41,6 +36,6 @@ func Negotiate(c *gin.Context, code int, obj any) {
 		c.Render(code, render.YAML{Data: obj})
 
 	default:
-		c.AbortWithError(http.StatusNotAcceptable, errors.New("the accepted formats are not offered by the server"))
+		_ = c.AbortWithError(http.StatusNotAcceptable, errors.New("the accepted formats are not offered by the server"))
 	}
 }

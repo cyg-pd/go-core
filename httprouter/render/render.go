@@ -26,5 +26,5 @@ func RenderError(ctx *gin.Context, err error) {
 		return
 	}
 
-	internalServerError(err).Render(ctx)
+	(&defaultErrorRender{err: err}).Render(ctx)
 }

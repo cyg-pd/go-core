@@ -63,7 +63,7 @@ func TestSuccess(t *testing.T) {
 	is.JSONEq(body, string(resBody))
 
 	var log map[string]any
-	json.Unmarshal(buf.Bytes(), &log)
+	is.NoError(json.Unmarshal(buf.Bytes(), &log))
 
 	is.JSONEq(
 		fmt.Sprintf(logTemplate, cast.ToString(log["time"]), cast.ToString(log["latency"]), `
@@ -115,7 +115,7 @@ func TestBodyReadError(t *testing.T) {
 	is.ErrorIs(e, err)
 
 	var log map[string]any
-	json.Unmarshal(buf.Bytes(), &log)
+	is.NoError(json.Unmarshal(buf.Bytes(), &log))
 
 	is.JSONEq(
 		fmt.Sprintf(logTemplate, cast.ToString(log["time"]), cast.ToString(log["latency"]), `
@@ -162,7 +162,7 @@ func TestRoundTripError(t *testing.T) {
 	is.ErrorIs(e, err)
 
 	var log map[string]any
-	json.Unmarshal(buf.Bytes(), &log)
+	is.NoError(json.Unmarshal(buf.Bytes(), &log))
 
 	is.JSONEq(
 		fmt.Sprintf(logTemplate, cast.ToString(log["time"]), cast.ToString(log["latency"]), `

@@ -49,7 +49,7 @@ func createRouter() (router *gin.Engine) {
 		ctx.JSON(200, map[string]string{"msg": "test"})
 	})
 	router.POST("/error", func(ctx *gin.Context) {
-		ctx.AbortWithError(500, errors.New("test error"))
+		_ = ctx.AbortWithError(500, errors.New("test error"))
 	})
 	return
 }
@@ -82,7 +82,7 @@ func TestAccessLogSkip(t *testing.T) {
 	// TEST
 	is := assert.New(t)
 	var logData map[string]any
-	json.Unmarshal(buf.Bytes(), &logData)
+	is.NoError(json.Unmarshal(buf.Bytes(), &logData))
 	is.Equal("", buf.String())
 }
 
@@ -98,7 +98,7 @@ func TestNoReqBody(t *testing.T) {
 	// TEST
 	is := assert.New(t)
 	var logData map[string]any
-	json.Unmarshal(buf.Bytes(), &logData)
+	is.NoError(json.Unmarshal(buf.Bytes(), &logData))
 
 	is.JSONEq(fmt.Sprintf(logTemplate, `
 	"ip": "`+cast.ToString(logData["ip"])+`",
@@ -150,7 +150,7 @@ func TestInputReqBody(t *testing.T) {
 	// TEST
 	is := assert.New(t)
 	var logData map[string]any
-	json.Unmarshal(buf.Bytes(), &logData)
+	is.NoError(json.Unmarshal(buf.Bytes(), &logData))
 
 	is.JSONEq(fmt.Sprintf(logTemplate, `
 	"ip": "`+cast.ToString(logData["ip"])+`",
@@ -204,7 +204,7 @@ func TestReqBodyReadError(t *testing.T) {
 	// TEST
 	is := assert.New(t)
 	var logData map[string]any
-	json.Unmarshal(buf.Bytes(), &logData)
+	is.NoError(json.Unmarshal(buf.Bytes(), &logData))
 
 	is.JSONEq(fmt.Sprintf(logTemplate, `
 	"ip": "`+cast.ToString(logData["ip"])+`",
@@ -242,7 +242,7 @@ func TestGinResError(t *testing.T) {
 	// TEST
 	is := assert.New(t)
 	var logData map[string]any
-	json.Unmarshal(buf.Bytes(), &logData)
+	is.NoError(json.Unmarshal(buf.Bytes(), &logData))
 
 	is.JSONEq(fmt.Sprintf(logTemplate, `
 	"go.error": "Error #01: test error\n",

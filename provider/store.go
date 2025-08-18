@@ -2,6 +2,7 @@ package provider
 
 import (
 	"errors"
+	"log/slog"
 	"sync"
 )
 
@@ -17,7 +18,9 @@ func Register(p Provider) {
 
 	provider = append(provider, p)
 	if isBoot {
-		p.Boot()
+		if err := p.Boot(); err != nil {
+			slog.Error("boot: " + err.Error())
+		}
 	}
 }
 

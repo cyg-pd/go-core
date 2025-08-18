@@ -137,15 +137,12 @@ func (a *Application) forceShutdown(ctx context.Context) {
 	os.Exit(1)
 }
 
-func New(httpRouter *httprouter.Server, msgRouter *msgrouter.Router, opts ...option) *Application {
+func New(httpRouter *httprouter.Server, msgRouter *msgrouter.Router) *Application {
 	app := &Application{
 		msgChan:    make(chan struct{}),
 		httpChan:   make(chan struct{}),
 		msgRouter:  msgRouter,
 		httpRouter: httpRouter,
-	}
-	for _, opt := range opts {
-		opt.apply(app)
 	}
 	return app
 }

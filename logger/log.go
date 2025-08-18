@@ -3,28 +3,28 @@ package logger
 import (
 	"log/slog"
 
-	coreconfig "github.com/cyg-pd/go-core/config"
 	"github.com/cyg-pd/go-slogx"
 	_ "github.com/cyg-pd/go-slogx/driver/console"
 	_ "github.com/cyg-pd/go-slogx/driver/json"
 	_ "github.com/cyg-pd/go-slogx/driver/otel"
 	_ "github.com/cyg-pd/go-slogx/driver/text"
 	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
-func init() {
-	pflag.String("log-driver", "console", "Log driver")
-	pflag.String("log-level", "info", "Log level (debug, info, warn, error)")
-	pflag.String("log-opts", "{}", "Log options")
-	pflag.Bool("log-source", false, "Log source")
+func SetupFlags(f *pflag.FlagSet, v *viper.Viper) {
+	f.String("log-driver", "console", "Log driver")
+	f.String("log-level", "info", "Log level (debug, info, warn, error)")
+	f.String("log-opts", "{}", "Log options")
+	f.Bool("log-source", false, "Log source")
 
-	coreconfig.BindPFlag("log.driver", pflag.Lookup("log-driver"))
-	coreconfig.BindPFlag("log.level", pflag.Lookup("log-level"))
-	coreconfig.BindPFlag("log.opts", pflag.Lookup("log-opts"))
-	coreconfig.BindPFlag("log.source", pflag.Lookup("log-source"))
+	_ = v.BindPFlag("log.driver", f.Lookup("log-driver"))
+	_ = v.BindPFlag("log.level", f.Lookup("log-level"))
+	_ = v.BindPFlag("log.opts", f.Lookup("log-opts"))
+	_ = v.BindPFlag("log.source", f.Lookup("log-source"))
 }
 
-func Parse() {
+func Parse(v *viper.Viper) {
 	var c struct {
 		Log struct {
 			Driver  string `mapstructure:"driver"`
@@ -34,8 +34,16 @@ func Parse() {
 		} `mapstructure:"log"`
 	}
 
-	if err := coreconfig.Unmarshal(&c); err != nil {
+	if err := v.Unmarshal(&c); err != nil {
 		panic(err)
+	}
+
+	if len(c.Log.Driver) == 0 {
+		c.Log.Driver = "console"
+	}
+
+	if len(c.Log.Level) == 0 {
+		c.Log.Level = "error"
 	}
 
 	slog.SetDefault(slogx.New(
