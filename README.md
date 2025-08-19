@@ -28,6 +28,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/cyg-pd/go-core/application"
 	"github.com/cyg-pd/go-core/config"
@@ -50,7 +51,7 @@ func init() {
 	logger.SetupFlags(f, v)
 
 	pflag.Parse()
-	logger.Parse(v)
+	slog.SetDefault(logger.New(v))
 
 	app = application.New(httprouter.New(v), msgrouter.New())
 	app.AddBeforeRunHook(func(ctx context.Context) error { return provider.Boot() })

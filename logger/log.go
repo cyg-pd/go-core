@@ -24,7 +24,7 @@ func SetupFlags(f *pflag.FlagSet, v *viper.Viper) {
 	_ = v.BindPFlag("log.source", f.Lookup("log-source"))
 }
 
-func Parse(v *viper.Viper) {
+func New(v *viper.Viper) *slog.Logger {
 	var c struct {
 		Log struct {
 			Driver  string `mapstructure:"driver"`
@@ -46,9 +46,9 @@ func Parse(v *viper.Viper) {
 		c.Log.Level = "error"
 	}
 
-	slog.SetDefault(slogx.New(
+	return slogx.New(
 		slogx.WithDriver(c.Log.Driver, c.Log.Options),
 		slogx.WithLevel(c.Log.Level),
 		slogx.WithSource(c.Log.Source),
-	))
+	)
 }
