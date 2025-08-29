@@ -3,7 +3,7 @@ module github.com/cyg-pd/go-core
 go 1.24
 
 require (
-	github.com/ThreeDotsLabs/watermill v1.4.7
+	github.com/ThreeDotsLabs/watermill v1.5.0
 	github.com/cyg-pd/go-otelx v0.0.3
 	github.com/cyg-pd/go-slogx v0.0.5
 	github.com/cyg-pd/go-watermillx v0.0.4
@@ -25,7 +25,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
-	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
