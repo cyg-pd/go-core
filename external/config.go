@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -13,9 +12,9 @@ import (
 
 func SetupFlags(f *pflag.FlagSet, v *viper.Viper, key string, service string) {
 	f.String("external-"+key+"-url", "http://example.com", service+" URL")
-	f.StringSlice("external-"+key+"-header", []string{}, service+" Custom Header (e.g., 'Key:Value')")
+	f.StringToString("external-"+key+"-headers", nil, service+"Custom HTTP headers (e.g., --headers 'Content-Type=application/json,Accept=text/plain')")
 	_ = v.BindPFlag("external."+key+".url", f.Lookup("external-"+key+"-url"))
-	_ = v.BindPFlag("external."+key+".header", f.Lookup("external-"+key+"-header"))
+	_ = v.BindPFlag("external."+key+".headers", f.Lookup("external-"+key+"-headers"))
 }
 
 type External struct {
@@ -55,17 +54,10 @@ func New(v *viper.Viper, name string) (*External, error) {
 		}
 	}
 
-	if vv := v.GetStringSlice("external." + name + ".header"); len(vv) > 0 {
+	if vv := v.GetStringMapString("external." + name + ".headers"); len(vv) > 0 {
 		c.Headers = make(http.Header, len(vv))
-		for _, h := range vv {
-			parts := strings.SplitN(h, ":", 2)
-			if len(parts) != 2 {
-				continue
-			}
-
-			key := strings.TrimSpace(parts[0])
-			value := strings.TrimSpace(parts[1])
-			c.Headers.Add(key, value)
+		for key, value := range vv {
+			c.Headers.Set(key, value)
 		}
 	}
 
