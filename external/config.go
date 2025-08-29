@@ -12,7 +12,7 @@ import (
 
 func SetupFlags(f *pflag.FlagSet, v *viper.Viper, key string, service string) {
 	f.String("external-"+key+"-url", "http://example.com", service+" URL")
-	f.StringToString("external-"+key+"-headers", nil, service+"Custom HTTP headers (e.g., --headers 'Content-Type=application/json,Accept=text/plain')")
+	f.StringToString("external-"+key+"-headers", nil, service+"Custom HTTP headers (e.g., --external-"+key+"-headers 'Content-Type=application/json,Accept=text/plain')")
 	_ = v.BindPFlag("external."+key+".url", f.Lookup("external-"+key+"-url"))
 	_ = v.BindPFlag("external."+key+".headers", f.Lookup("external-"+key+"-headers"))
 }
