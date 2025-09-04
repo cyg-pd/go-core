@@ -45,7 +45,8 @@ func TestSuccess(t *testing.T) {
 	r := newRequestLogTransport(
 		&mockRoundTripper{res: &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewBufferString(body))}},
 		&config{
-			logger: slog.New(slog.NewJSONHandler(buf, nil)),
+			logger:    slog.New(slog.NewJSONHandler(buf, nil)),
+			logOption: []logOption{WithMaxBodySize(0)},
 		},
 	)
 
