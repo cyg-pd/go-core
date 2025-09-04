@@ -26,8 +26,7 @@ func mockSlog(buf *bytes.Buffer) (fn func()) {
 var logTemplate = `
 {
 	"package": "` + pkg + `",
-	"channel": "access",
-	%s
+	"channel": "access", %s
 }`
 
 type brokenReader struct{ err error }
@@ -44,7 +43,7 @@ type header struct {
 func createRouter() (router *gin.Engine) {
 	gin.SetMode(gin.TestMode)
 	router = gin.New()
-	router.Use(NewAccessLog().Middleware())
+	router.Use(NewAccessLog(WithAccessLogMaxBodySize(0)).Middleware())
 	router.POST("/access", func(ctx *gin.Context) {
 		ctx.JSON(200, map[string]string{"msg": "test"})
 	})
@@ -72,6 +71,24 @@ func TestAccessLogSkip(t *testing.T) {
 	router.Use(NewAccessLog(WithAccessLogFilter(func(r *http.Request) bool {
 		return !strings.HasPrefix(r.URL.Path, "/access")
 	})).Middleware())
+	router.POST("/access", func(ctx *gin.Context) {
+		ctx.JSON(200, map[string]string{})
+	})
+
+	// RUN
+	PerformRequest(router, http.MethodPost, "https://example.com/access", nil)
+
+	// TEST
+	is := assert.New(t)
+	is.Zero("", buf)
+}
+
+func TestAccessLogNegativeBodySize(t *testing.T) {
+	buf := &bytes.Buffer{}
+	defer mockSlog(buf)()
+
+	router := gin.New()
+	router.Use(NewAccessLog(WithAccessLogMaxBodySize(-1)).Middleware())
 	router.POST("/access", func(ctx *gin.Context) {
 		ctx.JSON(200, map[string]string{})
 	})
@@ -207,7 +224,7 @@ func TestReqBodyReadError(t *testing.T) {
 	is.JSONEq(fmt.Sprintf(logTemplate, `
 	"ip": "`+cast.ToString(logData["ip"])+`",
 	"latency": `+cast.ToString(logData["latency"])+`,
-	"level": "INFO",
+	"level": "WARN",
 	"msg": "POST /readError HTTP/1.1",
 	"req": {
 		"method": "POST",
@@ -221,7 +238,7 @@ func TestReqBodyReadError(t *testing.T) {
 		"status_code": 404,
 		"headers": {},
 		"body": "",
-		"size": 0
+		"size": -1
 	},
 	"route": "",
 	"time": "`+cast.ToString(logData["time"])+`"

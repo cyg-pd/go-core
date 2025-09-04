@@ -12,17 +12,13 @@ import (
 )
 
 // accessLogOption applies a configuration accessLogOption value to a http.Client.
-type accessLogOption interface {
-	apply(*AccessLog)
-}
+type accessLogOption interface{ apply(*AccessLog) }
 
 // accessLogOptionFunc applies a set of options to a config.
 type accessLogOptionFunc func(*AccessLog)
 
 // apply returns a config with option(s) applied.
-func (o accessLogOptionFunc) apply(conf *AccessLog) {
-	o(conf)
-}
+func (o accessLogOptionFunc) apply(conf *AccessLog) { o(conf) }
 
 // WithAccessLogFilter associates slog.Logger with a http.Client.
 func WithAccessLogFilter(filters ...func(r *http.Request) bool) accessLogOption {
@@ -31,8 +27,16 @@ func WithAccessLogFilter(filters ...func(r *http.Request) bool) accessLogOption 
 	})
 }
 
+func WithAccessLogMaxBodySize(maxSize int) accessLogOption {
+	return accessLogOptionFunc(func(conf *AccessLog) {
+		conf.maxBodySize = int64(maxSize)
+	})
+}
+
 func NewAccessLog(opts ...accessLogOption) *AccessLog {
-	m := &AccessLog{}
+	m := &AccessLog{
+		maxBodySize: -1,
+	}
 	for _, opt := range opts {
 		opt.apply(m)
 	}
@@ -40,16 +44,21 @@ func NewAccessLog(opts ...accessLogOption) *AccessLog {
 }
 
 type AccessLog struct {
-	filters []func(r *http.Request) bool
+	maxBodySize int64
+	filters     []func(r *http.Request) bool
 }
 
 func (a AccessLog) reqBody(req *http.Request) slog.Attr {
+	if a.maxBodySize < 0 {
+		return slog.Attr{}
+	}
+
 	if req.Body == nil || req.Body == http.NoBody {
 		return slog.Attr{}
 	}
 
 	// content length bigger then 100kb ignore read body
-	if req.ContentLength > 100*1024 {
+	if a.maxBodySize > 0 && req.ContentLength > a.maxBodySize {
 		return slog.Attr{}
 	}
 
@@ -63,6 +72,26 @@ func (a AccessLog) reqBody(req *http.Request) slog.Attr {
 	return slog.String("body", string(b))
 }
 
+func (a AccessLog) resBody(c *gin.Context) slog.Attr {
+	if a.maxBodySize < 0 {
+		c.Next()
+		return slog.Attr{}
+	}
+
+	buf := &bytes.Buffer{}
+	buf.Reset()
+
+	defer func(w gin.ResponseWriter) { c.Writer = w }(c.Writer)
+	c.Writer = &bodyLogWriter{buf: buf, ResponseWriter: c.Writer}
+	c.Next()
+
+	if a.maxBodySize > 0 && int64(buf.Len()) > a.maxBodySize {
+		return slog.Attr{}
+	}
+
+	return slog.String("body", buf.String())
+}
+
 func (a *AccessLog) Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		for _, f := range a.filters {
@@ -74,43 +103,39 @@ func (a *AccessLog) Middleware() gin.HandlerFunc {
 			}
 		}
 
-		// Start timer
-		start := time.Now()
-
-		// req body
 		reqBody := a.reqBody(c.Request)
+		start := time.Now()
+		resBody := a.resBody(c)
+		finish := time.Since(start)
 
-		// res body
-		buf := &bytes.Buffer{}
-		// buf := buffpool.Get()
-		buf.Reset()
-		defer func(w gin.ResponseWriter) {
-			c.Writer = w
-			// buffpool.Put(buf)
-		}(c.Writer)
-		c.Writer = &bodyLogWriter{buf: buf, ResponseWriter: c.Writer}
-
-		// Process request
-		c.Next()
-		if err := c.Errors.String(); err == "" {
-			a.log(slog.InfoContext, c, time.Since(start), reqBody, buf, slog.Attr{})
-		} else {
-			a.log(slog.ErrorContext, c, time.Since(start), reqBody, buf, slog.String("error.message", err))
+		status := c.Writer.Status()
+		switch {
+		case status >= 500:
+			a.log(slog.LevelError, c, finish, reqBody, resBody)
+		case status >= 400:
+			a.log(slog.LevelWarn, c, finish, reqBody, resBody)
+		default:
+			a.log(slog.LevelInfo, c, finish, reqBody, resBody)
 		}
 	}
 }
 
 func (a *AccessLog) log(
-	log func(context.Context, string, ...any),
+	lvl slog.Level,
 	c *gin.Context,
 	latency time.Duration,
 	reqBody slog.Attr,
-	buf *bytes.Buffer,
-	err slog.Attr,
+	resBody slog.Attr,
 ) {
 
-	log(
-		c.Request.Context(),
+	err := slog.Attr{}
+	if s := c.Errors.String(); len(s) > 0 {
+		err = slog.String("error.message", s)
+	}
+
+	slog.Log(
+		context.WithoutCancel(c.Request.Context()),
+		lvl,
 		c.Request.Method+" "+c.Request.URL.Path+" "+c.Request.Proto,
 		err,
 		slog.String("package", pkg),
@@ -134,8 +159,8 @@ func (a *AccessLog) log(
 		slog.Group("res",
 			slog.Int("status_code", c.Writer.Status()),
 			slog.Any("headers", c.Writer.Header()),
-			slog.String("body", buf.String()),
-			slog.Int("size", len(buf.Bytes())),
+			resBody,
+			slog.Int("size", c.Writer.Size()),
 		),
 	)
 }
