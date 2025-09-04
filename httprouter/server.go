@@ -3,8 +3,11 @@ package httprouter
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -17,36 +20,59 @@ type server struct {
 	config *viper.Viper
 }
 
-func createHTTPServer(host string, h http.Handler) *http.Server {
-	return &http.Server{
-		Addr:    host,
-		Handler: h,
+func (e *server) createHTTPServer(host string, h http.Handler) *http.Server {
+	s := &http.Server{
+		Addr:                         host,
+		Handler:                      h,
+		DisableGeneralOptionsHandler: true,
+		ReadHeaderTimeout:            10 * time.Second,
+		ReadTimeout:                  60 * time.Second,
+		WriteTimeout:                 60 * time.Second,
+		IdleTimeout:                  120 * time.Second,
 	}
+
+	if t := e.config.GetDuration("http.server.idleTimeout"); t > 0 {
+		slog.Debug("core/httprouter: http.Server.IdleTimeout is set to " + t.String())
+		s.IdleTimeout = t
+	}
+
+	if t := e.config.GetDuration("http.server.writeTimeout"); t > 0 {
+		slog.Debug("core/httprouter: http.Server.WriteTimeout is set to " + t.String())
+
+		s.WriteTimeout = t
+	}
+
+	if t := e.config.GetDuration("http.server.readTimeout"); t > 0 {
+		slog.Debug("core/httprouter: http.Server.ReadTimeout is set to " + t.String())
+		s.ReadTimeout = t
+	}
+
+	if t := e.config.GetDuration("http.server.readHeaderTimeout"); t > 0 {
+		slog.Debug("core/httprouter: http.Server.ReadHeaderTimeout is set to " + t.String())
+		s.ReadHeaderTimeout = t
+	}
+
+	return s
 }
 
 func (e *server) Run(host ...string) error {
 	if len(host) == 0 {
-		c := e.config
-
-		defaultHost := c.GetString("http.host")
-		if defaultHost == "" {
-			return errors.New("core/httprouter: host can't be empty")
-		}
-
-		defaultPort := c.GetString("http.port")
-		if defaultPort == "" {
-			return errors.New("core/httprouter: port can't be empty")
-		}
-
-		host = append(host, defaultHost+":"+defaultPort)
+		host = append(
+			host,
+			e.config.GetString("http.host")+":"+strconv.Itoa(e.config.GetInt("http.port")),
+		)
 	}
 
-	e.server = createHTTPServer(host[0], http.AllowQuerySemicolons(e.Handler()))
+	ln, err := net.Listen("tcp", host[0])
+	if err != nil {
+		return fmt.Errorf("core/httprouter: %w", err)
+	}
 
-	slog.Info("core/httprouter: listening and serving HTTP on " + host[0])
-	if err := e.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		slog.Error("core/httprouter: listen error " + err.Error())
-		return err
+	e.server = e.createHTTPServer(ln.Addr().String(), http.AllowQuerySemicolons(e.Handler()))
+
+	slog.Info("core/httprouter: serving HTTP on " + ln.Addr().String())
+	if err := e.server.Serve(ln); err != nil && err != http.ErrServerClosed {
+		return fmt.Errorf("core/httprouter: %w", err)
 	}
 
 	return nil
@@ -65,8 +91,7 @@ func (e *server) Shutdown(ctx context.Context) error {
 	}
 
 	if err := e.server.Shutdown(ctx); err != nil {
-		slog.Error("core/httprouter: shutdown error: " + err.Error())
-		return err
+		return fmt.Errorf("core/httprouter: %w", err)
 	}
 
 	return nil
