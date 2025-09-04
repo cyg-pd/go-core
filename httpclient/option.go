@@ -16,10 +16,11 @@ type config struct {
 	keepAliveTimeout  time.Duration
 	keepAliveInterval time.Duration
 	keepAliveMax      int
-	insecure          bool
 	proxyURL          *url.URL
 	tlsCert           []byte
 	tlsKey            []byte
+	userAgent         string
+	insecure          bool
 
 	disableOpenTelemetry bool
 }
@@ -103,5 +104,11 @@ func WithDisableOpenTelemetry() option {
 func WithLogger(l *slog.Logger) option {
 	return optionFunc(func(conf *config) {
 		conf.logger = l
+	})
+}
+
+func WithUserAgent(ua string) option {
+	return optionFunc(func(conf *config) {
+		conf.userAgent = ua
 	})
 }

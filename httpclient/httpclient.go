@@ -59,6 +59,13 @@ func newTransport(conf *config) (t http.RoundTripper) {
 		TLSClientConfig:       tlsConf,
 	}
 
+	if len(conf.userAgent) > 0 {
+		t = &appendUserAgentTransport{
+			Transport: t,
+			AppendUA:  conf.userAgent,
+		}
+	}
+
 	if conf.logger != nil {
 		t = newRequestLogTransport(t, conf.logger)
 	}
