@@ -8,12 +8,11 @@ require (
 	github.com/cyg-pd/go-slogx v0.0.5
 	github.com/cyg-pd/go-watermillx v0.0.4
 	github.com/gin-gonic/gin v1.10.1
-	github.com/go-playground/validator/v10 v10.27.0
 	github.com/samber/lo v1.51.0
 	github.com/spf13/cast v1.9.2
 	github.com/spf13/pflag v1.0.7
 	github.com/spf13/viper v1.20.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/metric v1.37.0
@@ -42,6 +41,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/go-playground/validator/v10 v10.27.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
