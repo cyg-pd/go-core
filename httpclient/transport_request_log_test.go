@@ -44,7 +44,9 @@ func TestSuccess(t *testing.T) {
 
 	r := newRequestLogTransport(
 		&mockRoundTripper{res: &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewBufferString(body))}},
-		slog.New(slog.NewJSONHandler(buf, nil)),
+		&config{
+			logger: slog.New(slog.NewJSONHandler(buf, nil)),
+		},
 	)
 
 	req, _ := http.NewRequest(
@@ -104,7 +106,9 @@ func TestBodyReadError(t *testing.T) {
 
 	r := newRequestLogTransport(
 		&mockRoundTripper{res: &http.Response{StatusCode: 200, Body: body}},
-		slog.New(slog.NewJSONHandler(buf, nil)),
+		&config{
+			logger: slog.New(slog.NewJSONHandler(buf, nil)),
+		},
 	)
 
 	req, _ := http.NewRequest(http.MethodGet, "https://example.com/platform/feed/summary?currency=CNY&interval=0", nil)
@@ -152,7 +156,9 @@ func TestRoundTripError(t *testing.T) {
 	err := errors.New("error")
 	r := newRequestLogTransport(
 		&mockRoundTripper{e: err},
-		slog.New(slog.NewJSONHandler(buf, nil)),
+		&config{
+			logger: slog.New(slog.NewJSONHandler(buf, nil)),
+		},
 	)
 
 	req, _ := http.NewRequest(http.MethodGet, "https://example.com/platform/feed/summary?currency=CNY&interval=0", nil)

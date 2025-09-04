@@ -11,6 +11,7 @@ import (
 type config struct {
 	transport http.RoundTripper
 	logger    *slog.Logger
+	logOption []logOption
 
 	timeout           time.Duration
 	keepAliveTimeout  time.Duration
@@ -101,9 +102,10 @@ func WithDisableOpenTelemetry() option {
 	})
 }
 
-func WithLogger(l *slog.Logger) option {
+func WithLogger(l *slog.Logger, opts ...logOption) option {
 	return optionFunc(func(conf *config) {
 		conf.logger = l
+		conf.logOption = opts
 	})
 }
 

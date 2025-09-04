@@ -10,17 +10,28 @@ import (
 	"time"
 )
 
-func newRequestLogTransport(r http.RoundTripper, l *slog.Logger) http.RoundTripper {
-	rt := &requestLog{r, l}
-	if rt.log == nil {
-		rt.log = slog.Default()
+func newRequestLogTransport(r http.RoundTripper, l *config) http.RoundTripper {
+	if l.logger == nil {
+		return r
 	}
+
+	rt := &requestLog{
+		Proxied:     r,
+		log:         l.logger,
+		maxBodySize: -1,
+	}
+
+	for _, opt := range l.logOption {
+		opt.apply(rt)
+	}
+
 	return rt
 }
 
 type requestLog struct {
-	Proxied http.RoundTripper
-	log     *slog.Logger
+	Proxied     http.RoundTripper
+	log         *slog.Logger
+	maxBodySize int
 }
 
 func (l requestLog) RoundTrip(req *http.Request) (res *http.Response, e error) {
@@ -60,6 +71,10 @@ func (l requestLog) RoundTrip(req *http.Request) (res *http.Response, e error) {
 }
 
 func (l requestLog) reqBody(req *http.Request) slog.Attr {
+	if l.maxBodySize < 0 {
+		return slog.Attr{}
+	}
+
 	if req.Body == nil {
 		return slog.Attr{}
 	}
@@ -70,7 +85,11 @@ func (l requestLog) reqBody(req *http.Request) slog.Attr {
 	}
 
 	b, err := io.ReadAll(rb)
-	if err != nil || len(b) == 0 || len(b) > 100*1024 { // 100 KB
+	if err != nil || len(b) == 0 {
+		return slog.Attr{}
+	}
+
+	if l.maxBodySize > 0 && len(b) > l.maxBodySize {
 		return slog.Attr{}
 	}
 
@@ -78,10 +97,20 @@ func (l requestLog) reqBody(req *http.Request) slog.Attr {
 }
 
 func (l requestLog) resBody(res *http.Response, raw []byte) slog.Attr {
-	if b := l.decodeBody(res, raw); len(b) <= 100*1024 { // 100 KB
-		return slog.String("body", string(b))
+	if l.maxBodySize < 0 {
+		return slog.Attr{}
 	}
-	return slog.Attr{}
+
+	b := l.decodeBody(res, raw)
+	if len(b) == 0 {
+		return slog.Attr{}
+	}
+
+	if l.maxBodySize > 0 && len(b) > l.maxBodySize {
+		return slog.Attr{}
+	}
+
+	return slog.String("body", string(b))
 }
 
 func (l requestLog) decodeBody(res *http.Response, raw []byte) []byte {

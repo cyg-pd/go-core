@@ -66,9 +66,7 @@ func newTransport(conf *config) (t http.RoundTripper) {
 		}
 	}
 
-	if conf.logger != nil {
-		t = newRequestLogTransport(t, conf.logger)
-	}
+	t = newRequestLogTransport(t, conf)
 
 	if !conf.disableOpenTelemetry {
 		t = otelhttp.NewTransport(t)
