@@ -31,25 +31,20 @@ func (e *server) createHTTPServer(host string, h http.Handler) *http.Server {
 		IdleTimeout:                  120 * time.Second,
 	}
 
-	if t := e.config.GetDuration("http.server.idleTimeout"); t > 0 {
-		slog.Debug("core/httprouter: http.Server.IdleTimeout is set to " + t.String())
+	if t := e.config.GetDuration("http.server.idle.timeout"); t > 0 {
+		slog.Debug("core/httprouter: http.server.idle.timeout is set to " + t.String())
 		s.IdleTimeout = t
 	}
 
-	if t := e.config.GetDuration("http.server.writeTimeout"); t > 0 {
-		slog.Debug("core/httprouter: http.Server.WriteTimeout is set to " + t.String())
+	if t := e.config.GetDuration("http.server.write.timeout"); t > 0 {
+		slog.Debug("core/httprouter: http.server.write.timeout is set to " + t.String())
 
 		s.WriteTimeout = t
 	}
 
-	if t := e.config.GetDuration("http.server.readTimeout"); t > 0 {
-		slog.Debug("core/httprouter: http.Server.ReadTimeout is set to " + t.String())
+	if t := e.config.GetDuration("http.server.read.timeout"); t > 0 {
+		slog.Debug("core/httprouter: http.server.read.timeout is set to " + t.String())
 		s.ReadTimeout = t
-	}
-
-	if t := e.config.GetDuration("http.server.readHeaderTimeout"); t > 0 {
-		slog.Debug("core/httprouter: http.Server.ReadHeaderTimeout is set to " + t.String())
-		s.ReadHeaderTimeout = t
 	}
 
 	return s
