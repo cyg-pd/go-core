@@ -9,7 +9,7 @@ require (
 	github.com/cyg-pd/go-slogx v0.0.7
 	github.com/cyg-pd/go-watermillx v0.0.5
 	github.com/gin-gonic/gin v1.11.0
-	github.com/samber/lo v1.51.0
+	github.com/samber/lo v1.52.0
 	github.com/spf13/cast v1.10.0
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
