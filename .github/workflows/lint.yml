@@ -31,7 +31,7 @@ jobs:
           stable: false
       - uses: actions/checkout@v5
       - name: golangci-lint ${{ matrix.modules }}
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           working-directory: ${{ matrix.modules }}
           args: --timeout 120s --max-same-issues 50
